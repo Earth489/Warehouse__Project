@@ -14,11 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $category_id    = $_POST['category_id'];
     $selling_price  = $_POST['selling_price'];
     $reorder_level  = $_POST['reorder_level'];
-    // รับค่าใหม่สำหรับหน่วย
-    $base_unit = $_POST['base_unit'];
-    $sub_unit = !empty($_POST['sub_unit']) ? $_POST['sub_unit'] : null;
-    $unit_conversion_rate = $_POST['unit_conversion_rate'];
-    
+    $product_unit = $_POST['base_unit']; // ใช้ base_unit เป็น product_unit
+
     // อัพโหลดรูป
     $image_path = null;
     if (!empty($_FILES['image']['name'])) {
@@ -34,12 +31,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // บันทึกลง DB ด้วยคอลัมน์ใหม่
+    // บันทึกลง DB ด้วยคอลัมน์ที่ถูกต้อง
     $stmt = $conn->prepare("INSERT INTO products 
-        (product_name, category_id, selling_price, reorder_level, image_path, base_unit, sub_unit, unit_conversion_rate) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sidssssd", 
-        $product_name, $category_id, $selling_price, $reorder_level, $image_path, $base_unit, $sub_unit, $unit_conversion_rate
+        (product_name, category_id, selling_price, reorder_level, image_path, product_unit) 
+        VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sidiss", 
+        $product_name, $category_id, $selling_price, $reorder_level, $image_path, $product_unit
     );
 
     if ($stmt->execute()) {
@@ -222,10 +219,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     
                                 <!-- หน่วยหลัก -->
                                 <div class="col-md-6">
-                                    <label class="form-label">หน่วยหลัก (หน่วยใหญ่)</label>
+                                    <label class="form-label">หน่วยนับ<span class="text-danger">*</span></label>
                                     <select class="form-select form-control-simple rounded" 
                                             id="base_unit" name="base_unit" required onchange="updateSummary()">
-                                        <option value=""> เลือกหน่วยหลัก </option>
+                                        <option value=""> เลือกหน่วยนับ </option>
                                         <option>ชิ้น</option>
                                         <option>อัน</option>
                                         <option>แผ่น</option>
@@ -248,32 +245,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </select>
                                 </div>
 
-                                <!-- หน่วยย่อย -->
-                                <div class="col-md-6">
-                                    <label class="form-label">หน่วยย่อย (หน่วยเล็ก)</label>
-                                    <select class="form-select form-control-simple rounded" 
-                                            id="sub_unit" name="sub_unit" onchange="updateSummary()">
-                                        <option value=""> เลือกหน่วยย่อย </option>
-                                        <option>กล่อง</option>
-                                        <option>แพ็ก</option>
-                                        <option>มัด</option>
-                                        <option>ห่อ</option>
-                                        <option>เมตร</option>
-                                        <option>ม้วน</option>
-                                        <option>ถุง</option>
-                                        <option>ถุงเล็ก</option>
-                                        <option>กิโลกรัม</option>
-                                        <option>ตัว</option>
-                                        <option>อัน</option>
-                                    </select>
-                                </div>
-                            </div>
-                                    
-                                    <div class="col-md-12">
-                                        <label class="form-label">จำนวนหน่วยย่อยต่อ 1 หน่วยหลัก </label>
-                                        <input type="number" class="form-control form-control-simple rounded" id="unit_conversion_rate" name="unit_conversion_rate" value="1" step="0.01" required oninput="updateSummary()">
-                                    </div>
-
                                     <div class="col-12">
                                         <div class="unit-summary-box" id="unitSummary">
                                             <i class="bi bi-lightbulb-fill"></i> กรุณากรอกหน่วยนับและอัตราส่วนเพื่อดูสรุป
@@ -281,7 +252,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </div>
 
                                     <div class="col-md-6 mt-3">
-                                        <label class="form-label">ราคาขาย <span class="text-muted small">(ต่อหน่วยย่อย)</span></label>
+                                        <label class="form-label">ราคาขาย <span class="text-danger">*</span><span class="text-muted small">(ต่อหน่วย)</span></label>
                                         <div class="input-group">
                                             <span class="input-group-text border">฿</span>
                                             <input type="number" step="0.01" name="selling_price" class="form-control" placeholder="0.00" required>
@@ -289,7 +260,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </div>
 
                                     <div class="col-md-6 mt-3">
-                                        <label class="form-label">จุดสั่งซื้อใหม่(จุดเตือนเมื่อของใกล้หมด) <span class="text-muted small"></span></label>
+                                        <label class="form-label">จุดสั่งซื้อใหม่ <span class="text-danger">*</span><span class="text-muted small">(จำนวนขั้นต่ำ)</span></label>
                                         <div class="input-group">
                                             <span class="input-group-text border"><i class="bi bi-bell"></i></span>
                                             <input type="number" name="reorder_level" class="form-control" placeholder="จำนวนขั้นต่ำ" required>
@@ -297,11 +268,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </div>
                                 </div>
 
-                            </div>
-                        </div> </div> <div class="card-footer bg-white p-3 text-end">
-                        <a href="products.php" class="btn btn-light btn-lg px-4 border">ยกเลิก</a>
-                        <button type="submit" name="update" id="update-btn" class="btn btn-success btn-lg px-4 shadow-sm">
-                                    <span class="me-1">💾</span> บันทึกการแก้ไข
+                            </div> <!-- end col-md-8 -->
+                        </div> <!-- end row -->
+                    </div> <!-- end card-body -->
+                    <div class="card-footer bg-white p-3 text-end">
+                        <a href="products.php" class="btn btn-secondary btn-lg px-4">ยกเลิก</a>
+                        <button type="submit" class="btn btn-primary btn-lg px-4 shadow-sm">
+                                    <i class="bi bi-save"></i> บันทึกสินค้า
                                 </button>
                     </div>
                 </div>
@@ -337,20 +310,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ฟังก์ชันสรุปหน่วยนับอัตโนมัติ
     function updateSummary() {
         const baseUnit = document.getElementById('base_unit').value;
-        const subUnit = document.getElementById('sub_unit').value;
-        const rate = document.getElementById('unit_conversion_rate').value;
         const summaryBox = document.getElementById('unitSummary');
 
-        if(baseUnit && subUnit && rate) {
-            if(rate == 1) {
-                summaryBox.innerHTML = `<i class="bi bi-check-circle-fill"></i> สินค้านี้ขายเป็น <strong>${baseUnit}</strong> (ไม่มีหน่วยย่อย)`;
-            } else {
-                summaryBox.innerHTML = `<i class="bi bi-arrow-repeat"></i> สรุป: 1 <strong>${baseUnit}</strong> ประกอบด้วย ${rate} <strong>${subUnit}</strong>`;
-            }
-        } else if (baseUnit && !subUnit) {
-             summaryBox.innerHTML = `<i class="bi bi-check-circle-fill"></i> สินค้านี้ขายเป็น <strong>${baseUnit}</strong> เท่านั้น`;
+        if (baseUnit) {
+             summaryBox.innerHTML = `<i class="bi bi-check-circle-fill"></i> หน่วยของสินค้าที่จะบันทึกคือ: <strong>${baseUnit}</strong>`;
         } else {
-            summaryBox.innerHTML = `<i class="bi bi-lightbulb-fill"></i> กรอกข้อมูลให้ครบเพื่อดูสรุปโครงสร้างหน่วยสินค้า`;
+            summaryBox.innerHTML = `<i class="bi bi-lightbulb-fill"></i> กรุณาเลือกหน่วยหลักเพื่อดูสรุป`;
         }
     }
 

@@ -40,7 +40,7 @@ if ($end_date) {
     $types .= "s";
 }
 if ($search_term) {
-    $sql .= " AND (bill_number LIKE ?)";
+    $sql .= " AND (s.sale_id LIKE ?)";
     $like = "%".$search_term."%";
     $params[] = $like;
     $types .= "s";
@@ -104,20 +104,28 @@ $stmt->close();
 
   <!-- ฟอร์มค้นหา -->
   <form method="GET" class="card card-body mb-4">
-    <div class="row g-3">
+    <div class="row g-3 align-items-end">
 
       <div class="col-md-3">
+        <label class="form-label">จากวันที่</label>
         <input type="date" name="start_date" class="form-control"
                value="<?= htmlspecialchars($start_date) ?>">
       </div>
 
       <div class="col-md-3">
+        <label class="form-label">ถึงวันที่</label>
         <input type="date" name="end_date" class="form-control"
                value="<?= htmlspecialchars($end_date) ?>">
       </div>
 
-      <div class="col-md-6 d-flex">
-        <button class="btn btn-primary flex-grow-1 me-2" type="submit">ค้นหา</button>
+      <div class="col-md-3">
+        <label class="form-label">เลขที่บิล</label>
+        <input type="text" name="search_term" class="form-control"
+               placeholder="ค้นหา..." value="<?= htmlspecialchars($search_term) ?>">
+      </div>
+
+      <div class="col-md-3 d-flex gap-2">
+        <button class="btn btn-primary flex-grow-1" type="submit">ค้นหา</button>
         <a href="warehouse_sale.php" class="btn btn-dark flex-grow-1">-</a>
       </div>
 
@@ -132,6 +140,7 @@ $stmt->close();
     <thead class="table-dark">
       <tr>
         <th>วันที่</th>
+        <th>เลขที่บิล</th>
         <th>ยอดรวม (บาท)</th>
         <th>จัดการ</th>
       </tr>
@@ -142,6 +151,7 @@ $stmt->close();
         <?php foreach ($bills_out as $row): ?>
         <tr>
           <td><?= date("d/m/Y", strtotime($row['bill_date'])) ?></td>
+          <td><?= htmlspecialchars($row['bill_number']) ?></td>
           <td class="text-end"><?= number_format($row['total_amount'], 2) ?></td>
           <td class="text-center">
             <a href="sale_detail.php?sale_id=<?= $row['bill_id'] ?>"
@@ -150,7 +160,7 @@ $stmt->close();
         </tr>
         <?php endforeach; ?>
       <?php else: ?>
-        <tr><td colspan="3" class="text-center text-muted">ไม่พบข้อมูล</td></tr>
+        <tr><td colspan="4" class="text-center text-muted">ไม่พบข้อมูล</td></tr>
       <?php endif; ?>
     </tbody>
 
@@ -158,7 +168,7 @@ $stmt->close();
       <tr class="table-light">
         <th class="text-end">ยอดรวมบิลขายที่แสดง:</th>
         <th class="text-end"><?= number_format($total_out, 2) ?></th>
-        <th></th>
+        <th colspan="2"></th>
       </tr>
     </tfoot>
   </table>

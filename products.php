@@ -10,20 +10,18 @@ if (!isset($_SESSION['user_id'])) {
 
 // ดึงข้อมูลสำหรับ Filter
 $categories = $conn->query("SELECT category_id, category_name FROM categories ORDER BY category_name ASC");
-$suppliers = $conn->query("SELECT supplier_id, supplier_name FROM suppliers ORDER BY supplier_name ASC");
 
 // รับค่าจากฟอร์มค้นหา
 $search_term = $_GET['search_term'] ?? '';
 $category_id = $_GET['category_id'] ?? '';
-$supplier_id = $_GET['supplier_id'] ?? '';
 
-// ดึงข้อมูลสินค้า + ประเภท + ซัพพลายเออร์
-$sql = "SELECT p.product_id, p.product_name, c.category_name, s.supplier_name,
-               p.base_unit, p.sub_unit, p.unit_conversion_rate,
-               p.selling_price, p.stock_in_sub_unit, p.reorder_level, p.image_path
+// ดึงข้อมูลสินค้า + ประเภท
+$sql = "SELECT p.product_id, p.product_name, c.category_name,
+               p.product_unit,
+               p.selling_price, p.stock_quantity, p.reorder_level, p.image_path
         FROM products p
-        LEFT JOIN categories c ON p.category_id = c.category_id
-        LEFT JOIN suppliers s ON p.supplier_id = s.supplier_id";
+        LEFT JOIN categories c ON p.category_id = c.category_id";
+
 
 $conditions = [];
 $params = [];
@@ -37,11 +35,6 @@ if (!empty($search_term)) {
 if (!empty($category_id)) {
     $conditions[] = "p.category_id = ?";
     $params[] = $category_id;
-    $types .= 'i';
-}
-if (!empty($supplier_id)) {
-    $conditions[] = "p.supplier_id = ?";
-    $params[] = $supplier_id;
     $types .= 'i';
 }
 
@@ -79,7 +72,7 @@ $result = $stmt->get_result();
 
         .card-box {
             border: none;
-            border-radius: 100px;
+            border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             background: white;
         }
@@ -187,16 +180,8 @@ $result = $stmt->get_result();
                         <?php endwhile; ?>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label text-muted small">ซัพพลายเออร์</label>
-                    <select name="supplier_id" class="form-select">
-                        <option value=""> ทั้งหมด </option>
-                        <?php mysqli_data_seek($suppliers, 0); while($s = $suppliers->fetch_assoc()): ?>
-                            <option value="<?= $s['supplier_id'] ?>" <?= ($supplier_id == $s['supplier_id']) ? 'selected' : '' ?>><?= htmlspecialchars($s['supplier_name']) ?></option>
-                        <?php endwhile; ?>
-                    </select>
-                </div>
-                <div class="col-md-2">
+                <div class="col-md-5">
+                    <label class="form-label text-muted small">&nbsp;</label>
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary w-100"><i class="bi "></i>ค้นหา</button>
                         <a href="products.php" class="btn btn-light border w-50" title="ล้างค่า"><i class="bi bi-arrow-counterclockwise"></i></a>
@@ -215,7 +200,6 @@ $result = $stmt->get_result();
                         <th width="8%">รูปภาพ</th>
                         <th width="20%">ชื่อสินค้า</th>
                         <th width="12%">ประเภท</th>
-                        <th width="12%">ซัพพลายเออร์</th>
                         <th width="12%" class="text-end">ราคาขาย</th>
                         <th width="15%">คงเหลือ/สถานะ</th>
                         <th width="10%" class="text-center">จัดการ</th>
@@ -225,29 +209,13 @@ $result = $stmt->get_result();
                     <?php if ($result->num_rows > 0): ?>
                         <?php while ($row = $result->fetch_assoc()): ?>
                             <?php 
-                                // คำนวณสต็อก
-                                $baseUnitStock = 0;
-                                $subUnitStock = 0;
-                                // ป้องกัน Division by Zero
-                                if ($row['unit_conversion_rate'] > 0) {
-                                    $baseUnitStock = floor($row['stock_in_sub_unit'] / $row['unit_conversion_rate']);
-                                    $subUnitStock = fmod($row['stock_in_sub_unit'], $row['unit_conversion_rate']);
-                                }
-
-                                
                                 // แสดงผลสต็อก
-                                $stockText = "";
-                                if ($row['unit_conversion_rate'] > 1 && !empty($row['sub_unit'])) {
-                                    $stockText = "{$baseUnitStock} {$row['base_unit']}";
-                                    if($subUnitStock > 0) $stockText .= " <span class='text-muted small'>({$subUnitStock} {$row['sub_unit']})</span>";
-                                } else {
-                                    $stockText = "{$row['stock_in_sub_unit']} {$row['base_unit']}";
-                                }
+                                $stockText = number_format($row['stock_quantity'], 2) . " " . htmlspecialchars($row['product_unit']);
 
                                 // ตรวจสถานะสินค้าใกล้หมด
-                                $isLowStock = ($row['stock_in_sub_unit'] <= $row['reorder_level']) && !empty($row['supplier_name']);
+                                $isLowStock = ($row['stock_quantity'] <= $row['reorder_level']);
                             ?>
-                            <tr class="<?= $isLowStock ? 'bg-light' : '' ?>">
+                            <tr class="<?= $isLowStock ? 'table-danger' : '' ?>">
                                 <td class="ps-4 text-muted">#<?= $row['product_id'] ?></td>
                                 <td>
                                     <?php if (!empty($row['image_path'])): ?>
@@ -260,19 +228,15 @@ $result = $stmt->get_result();
                                 </td>
                                 <td>
                                     <div class="fw-bold text-dark"><?= htmlspecialchars($row['product_name']) ?></div>
-                                    <small class="text-muted" style="font-size: 0.75rem;">
-                                        1 <?= $row['base_unit'] ?> = <?= $row['unit_conversion_rate'] . ' ' . $row['sub_unit'] ?>
-                                    </small>
                                 </td>
                                 <td><span class="badge bg-secondary bg-opacity-10 text-secondary fw-normal"><?= htmlspecialchars($row['category_name'] ?? '-') ?></span></td>
-                                <td class="text-muted small"><?= htmlspecialchars($row['supplier_name'] ?? '-') ?></td>
                                 <td class="text-end fw-bold text-primary"><?= number_format($row['selling_price'], 2) ?></td>
                                 <td>
                                     <div><?= $stockText ?></div>
                                     <?php if($isLowStock): ?>
                                         <span class="badge-soft-danger mt-1 d-inline-block">
                                             <i class="bi bi-exclamation-circle-fill"></i> ใกล้หมด
-                                        </span>                                    <?php elseif(!empty($row['supplier_name'])): // แสดงคำว่า "ปกติ" ต่อเมื่อมีซัพพลายเออร์เท่านั้น ?>
+                                        </span>                                    <?php else: ?>
                                         <span class="badge-soft-success mt-1 d-inline-block">
                                             <i class="bi bi-check-circle-fill"></i> ปกติ
                                         </span>
@@ -294,7 +258,7 @@ $result = $stmt->get_result();
                         <?php endwhile; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="8" class="text-center py-5 text-muted">
+                            <td colspan="7" class="text-center py-5 text-muted">
                                 <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                                 ไม่พบข้อมูลสินค้าที่ค้นหา
                             </td>

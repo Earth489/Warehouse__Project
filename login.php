@@ -94,12 +94,12 @@
 
         <h1 class="mb-4">เข้าสู่ระบบ</h1>
         <div class="mb-3 text-start">
-            <label for="username" class="form-label">Username</label>
-            <input type="username" name="username" id="username" placeholder="Username" class="form-control">
+            <label for="username" class="form-label">ชื่อผู้ใช้</label>
+            <input type="username" name="username" id="username" placeholder="ชื่อผู้ใช้" class="form-control">
         </div>
         <div class="mb-3 text-start">
             <label for="pws" class="form-label">รหัสผ่าน</label>
-            <input type="password" name="pws" id="pws" placeholder="Password" class="form-control">
+            <input type="password" name="pws" id="pws" placeholder="รหัสผ่าน" class="form-control">
         </div>
         
         <button type="submit" name="enter" class="btn-login">เข้าสู่ระบบ</button>

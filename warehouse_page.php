@@ -36,13 +36,13 @@ $sql = "
 
 // เพิ่มเงื่อนไขค้นหา
 if ($start_date) {
-    $sql .= " AND bill_date >= ?";
+    $sql .= " AND p.purchase_date >= ?";
     $params[] = $start_date;
     $types .= "s";
 }
 
 if ($end_date) {
-    $sql .= " AND bill_date <= ?";
+    $sql .= " AND p.purchase_date <= ?";
     $params[] = $end_date;
     $types .= "s";
 }
@@ -113,18 +113,22 @@ $stmt->close();
 
   <!-- ฟอร์มค้นหา -->
   <form method="GET" class="card card-body mb-4">
-    <div class="row g-3">
+    <div class="row g-3 align-items-end">
       <div class="col-md-3">
+        <label class="form-label">จากวันที่</label>
         <input type="date" name="start_date" class="form-control" 
                value="<?= htmlspecialchars($start_date) ?>">
       </div>
       <div class="col-md-3">
+        <label class="form-label">ถึงวันที่</label>
         <input type="date" name="end_date" class="form-control" 
                value="<?= htmlspecialchars($end_date) ?>">
       </div>
       <div class="col-md-3">
+        <label class="form-label">ซัพพลายเออร์</label>
         <select name="supplier_id" class="form-select">
             <option value=""> เลือกซัพพลายเออร์ </option>
+            <?php mysqli_data_seek($suppliers_result, 0); ?>
             <?php while($s = $suppliers_result->fetch_assoc()): ?>
                 <option value="<?= $s['supplier_id'] ?>" <?= ($supplier_id == $s['supplier_id']) ? 'selected' : '' ?>>
                     <?= htmlspecialchars($s['supplier_name']) ?>
@@ -132,7 +136,7 @@ $stmt->close();
             <?php endwhile; ?>
         </select>
       </div>
-      <div class="col-md-3 d-flex">
+      <div class="col-md-3 d-flex gap-2">
         <button class="btn btn-primary flex-grow-1 me-2" type="submit">ค้นหา</button>
         <a href="warehouse_page.php" class="btn btn-dark flex-grow-1">-</a>
       </div>
