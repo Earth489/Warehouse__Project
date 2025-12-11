@@ -54,9 +54,7 @@ if ($bill_type === 'บิลซื้อ (Purchase)') {
         FROM purchases p
         LEFT JOIN suppliers s ON p.supplier_id = s.supplier_id
         WHERE p.purchase_date BETWEEN ? AND ?
-
         UNION ALL
-
         SELECT 
             s.sale_id AS bill_id, 
             s.sale_id AS bill_number, 
@@ -66,7 +64,6 @@ if ($bill_type === 'บิลซื้อ (Purchase)') {
             'บิลขาย (Sale)' AS bill_type
         FROM sales s
         WHERE s.sale_date BETWEEN ? AND ?
-
         ORDER BY bill_date DESC, bill_type
     ";
     $stmt = $conn->prepare($sql);
@@ -146,6 +143,7 @@ while($row = $result->fetch_assoc()) { $all_bills[] = $row; }
 
     <!-- ฟอร์มเลือกวันที่ -->
     <form method="get" class="card card-body mb-4 no-print">
+        <h5 class="card-title mb-3">กำหนดช่วงข้อมูลรายงาน</h5>
         <div class="row g-3 align-items-end">
             <div class="col-md-3">
                 <label class="form-label">ตั้งแต่วันที่</label>
@@ -165,10 +163,11 @@ while($row = $result->fetch_assoc()) { $all_bills[] = $row; }
             </div>
             <div class="col-md-3 d-flex gap-2">
                 <button type="submit" class="btn btn-primary flex-fill">แสดงรายงาน</button>
-                <button type="button" class="btn btn-danger flex-fill" onclick="window.print()">พิมพ์ (PDF)</button>
+                <a href="#" id="print-summary-btn" class="btn btn-danger flex-fill" target="_blank">พิมพ์สรุป (PDF)</a>
             </div>
         </div>
     </form>
+
 
     <?php 
         // คำนวณยอดสรุป
@@ -178,7 +177,7 @@ while($row = $result->fetch_assoc()) { $all_bills[] = $row; }
         $sale_count = 0;
         foreach ($all_bills as $bill) {
             if ($bill['bill_type'] == 'บิลซื้อ (Purchase)') {
-                // เพิ่ม VAT 7% เข้าไปในยอดซื้อรวม
+                // ยอดซื้อรวมจาก total_amount ในฐานข้อมูล (ซึ่งยังไม่รวม VAT) ต้องคูณ 1.07
                 $total_purchase += $bill['total_amount'] * 1.07;
                 $purchase_count++;
             } else {
@@ -202,9 +201,7 @@ while($row = $result->fetch_assoc()) { $all_bills[] = $row; }
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div>
                         <strong>วันที่:</strong> <?= date("d/m/Y", strtotime($row['bill_date'])) ?><br>
-                        <?php if ($row['bill_type'] != 'บิลขาย (Sale)'): ?>
                         <strong>เลขที่บิล:</strong> <?= htmlspecialchars($row['bill_number']) ?><br>
-                        <?php endif; ?>
                         <strong>คู่ค้า:</strong> <?= htmlspecialchars($row['party_name']) ?>
                     </div>
                     <span class="badge <?= ($row['bill_type'] == 'บิลซื้อ (Purchase)') ? 'bg-success' : 'bg-danger' ?>">
@@ -215,14 +212,14 @@ while($row = $result->fetch_assoc()) { $all_bills[] = $row; }
                     <?php
                     if ($row['bill_type'] == 'บิลซื้อ (Purchase)') {
                         $detail_sql = "
-                            SELECT pd.quantity, pd.purchase_price AS price, p.product_name, p.base_unit AS unit
+                            SELECT pd.quantity, pd.purchase_price AS price, p.product_name, p.product_unit AS unit
                             FROM purchase_details pd
                             JOIN products p ON pd.product_id = p.product_id
                             WHERE pd.purchase_id = ?
                         ";
                     } else {
                         $detail_sql = "
-                            SELECT sd.quantity, sd.sale_price AS price, sd.sale_unit AS unit, p.product_name, p.base_unit, p.unit_conversion_rate
+                            SELECT sd.quantity, sd.sale_price AS price, sd.sale_unit AS unit, p.product_name
                             FROM sale_details sd
                             JOIN products p ON sd.product_id = p.product_id
                             WHERE sd.sale_id = ?
@@ -246,32 +243,27 @@ while($row = $result->fetch_assoc()) { $all_bills[] = $row; }
                             <tbody>
                                 <?php $sum = 0;
                                 while ($d = $details->fetch_assoc()):
-                                    $line_total = 0;
-                                    $display_price = $d['price'];
-                                    $multiplier = 1;
-
-                                    if ($row['bill_type'] == 'บิลขาย (Sale)' && $d['unit'] == $d['base_unit'] && $d['unit_conversion_rate'] > 1) {
-                                        $multiplier = $d['unit_conversion_rate'];
-                                        $display_price = $d['price'] * $multiplier; // ราคาต่อหน่วยหลัก
-                                    }
-                                    
-                                    $line_total = $d['quantity'] * $d['price'] * $multiplier;
+                                    // ราคาต่อหน่วยที่แสดงคือราคา ณ ตอนที่ขาย ไม่ต้องคำนวณแปลงหน่วยซ้ำ
+                                    $line_total = $d['quantity'] * $d['price'];
                                     $sum += $line_total; ?>
                                     <tr>
                                         <td><?= htmlspecialchars($d['product_name']) ?></td>
                                         <td><?= $d['quantity'] ?></td>
                                         <td><?= htmlspecialchars($d['unit']) ?></td>
-                                        <td><?= number_format($display_price, 2) ?></td>
+                                        <td><?= number_format($d['price'], 2) ?></td>
                                         <td><?= number_format($line_total, 2) ?></td>
                                     </tr>
                                 <?php endwhile; ?>
-                                <?php if ($row['bill_type'] == 'บิลซื้อ (Purchase)'): 
-                                    $vat = $sum * 0.07;
-                                    $grand_total = $sum + $vat;
+                                <?php if ($row['bill_type'] == 'บิลซื้อ (Purchase)'):
+                                    // คำนวณ VAT และราคาก่อน VAT จาก total_amount ที่บันทึกไว้ในบิล เพื่อความถูกต้อง
+                                    $grand_total_with_vat = $row['total_amount'] * 1.07;
+                                    $price_before_vat = $row['total_amount']; // total_amount ใน DB คือยอดก่อน VAT
+                                    $vat = $grand_total_with_vat - $price_before_vat;
                                 ?>
-                                <tr><td colspan="4" class="text-end">ราคารวม (ก่อน VAT)</td><td class="text-end fw-bold"><?= number_format($sum, 2) ?></td></tr>
+                                <!-- แสดงผลรวมจากรายการสินค้าเพื่อตรวจสอบ แต่ใช้ค่าที่คำนวณจาก total_amount เป็นหลัก -->
+                                <tr><td colspan="4" class="text-end">ราคารวม (ก่อน VAT)</td><td class="text-end fw-bold"><?= number_format($price_before_vat, 2) ?></td></tr>
                                 <tr><td colspan="4" class="text-end">VAT (7%)</td><td class="text-end fw-bold"><?= number_format($vat, 2) ?></td></tr>
-                                <tr class="table-secondary"><td colspan="4" class="text-end fw-bold">ยอดรวมสุทธิ</td><td class="text-end fw-bold"><?= number_format($grand_total, 2) ?></td></tr>
+                                <tr class="table-secondary"><td colspan="4" class="text-end fw-bold">ยอดรวมสุทธิ</td><td class="text-end fw-bold"><?= number_format($grand_total_with_vat, 2) ?></td></tr>
                                 <?php else: ?>
                                 <tr class="table-secondary">
                                     <td colspan="4" class="text-end fw-bold">รวมทั้งหมด</td>
@@ -290,5 +282,19 @@ while($row = $result->fetch_assoc()) { $all_bills[] = $row; }
         <div class="alert alert-warning text-center">ไม่พบบิลในช่วงวันที่ที่เลือก</div>
     <?php endif; ?>
 </div>
+
+<script>
+function updatePrintLink() {
+    const startDate = document.querySelector('input[name="start_date"]').value;
+    const endDate = document.querySelector('input[name="end_date"]').value;
+    const billType = document.querySelector('select[name="bill_type"]').value;
+    const printBtn = document.getElementById('print-summary-btn');
+    printBtn.href = `report_summary_print.php?start_date=${startDate}&end_date=${endDate}&bill_type=${billType}`;
+}
+// อัปเดตลิงก์เมื่อหน้าโหลดและเมื่อมีการเปลี่ยนแปลงค่าในฟอร์ม
+document.addEventListener('DOMContentLoaded', updatePrintLink);
+document.querySelector('form').addEventListener('change', updatePrintLink);
+</script>
+
 </body>
 </html>

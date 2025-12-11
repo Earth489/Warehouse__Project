@@ -13,11 +13,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $supplier_name = $_POST['supplier_name'];
     $address = $_POST['address'];
     $phone = $_POST['phone'];
+    $description = $_POST['description']; // รับค่า description
 
-    $sql = "INSERT INTO suppliers (supplier_name, address, phone) 
-            VALUES ('$supplier_name', '$address', '$phone')";
+    // ใช้ Prepared Statements เพื่อป้องกัน SQL Injection
+    $stmt = $conn->prepare("INSERT INTO suppliers (supplier_name, address, phone, description) VALUES (?, ?, ?, ?)");
+    if ($stmt === false) {
+        die("เกิดข้อผิดพลาดในการเตรียมคำสั่ง: " . $conn->error);
+    }
+    $stmt->bind_param("ssss", $supplier_name, $address, $phone, $description);
 
-    if ($conn->query($sql) === TRUE) {
+    if ($stmt->execute()) {
         header("Location: suppliers.php");
         exit();
     } else {
@@ -77,6 +82,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="mb-3">
       <label class="form-label">เบอร์โทร</label>
       <input type="text" name="phone" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">รายละเอียด</label>
+      <textarea name="description" class="form-control" rows="3"></textarea>
     </div>
     <button type="submit" class="btn btn-success">บันทึก</button>
     <a href="suppliers.php" class="btn btn-secondary">ยกเลิก</a>

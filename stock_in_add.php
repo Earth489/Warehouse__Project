@@ -88,6 +88,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta charset="utf-8">
 <title>รับสินค้าเข้าคลัง</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+<style>
+  /* ปรับแก้ให้ select2 แสดงผลได้ถูกต้องในตาราง */
+  .select2-container--bootstrap-5 .select2-selection { padding: 0.375rem 0.75rem; height: calc(2.4375rem + 2px); }
+</style>
 </head>
 <body>
 
@@ -141,22 +148,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
     </div>
 
-    <table class="table table-bordered">
+    <table class="table table-bordered" style="table-layout: fixed;">
       <thead class="table-dark text-center">
         <tr>
-          <th>สินค้า</th>
-          <th>ประเภท</th>
-          <th>หน่วยที่รับ (หน่วยหลัก)</th>
-          <th>ราคาซื้อ (ต่อหน่วยหลัก)</th>
-          <th>จำนวน (หน่วยหลัก)</th>
-          <th>ราคารวม</th>
-          <th></th>
+          <th style="width: 35%;">สินค้า</th>
+          <th style="width: 15%;">ประเภท</th>
+          <th style="width: 10%;">หน่วย</th>
+          <th style="width: 12%;">ราคาซื้อ</th>
+          <th style="width: 10%;">จำนวน</th>
+          <th style="width: 13%;">ราคารวม</th>
+          <th style="width: 13%;">ราคารวม (รวม VAT)</th>
+          <th style="width: 5%;"></th>
         </tr>
       </thead>
       <tbody id="itemBody">
         <tr>
           <td>
-            <select name="product[]" class="form-select" required>
+            <select name="product[]" class="form-select product-select" required>
               <option value=""> เลือกสินค้า </option>
               <?php foreach($products as $p): ?>
                 <option value="<?=$p['product_id']?>"
@@ -172,6 +180,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <td><input type="number" step="0.01" name="purchase_price[]" class="form-control text-end" required></td>
           <td><input type="number" name="quantity[]" class="form-control text-center" min="1" required></td>
           <td><input type="text" class="form-control text-end row-total" readonly></td>
+          <td><input type="text" class="form-control text-end row-total-vat" readonly></td>
           <td><button type="button" class="btn btn-danger btn-remove">-</button></td>
         </tr>
       </tbody>
@@ -187,74 +196,95 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p>ราคารวมทั้งหมด: <span id="totalAmount">0.00</span> บาท</p>
         </div>
   </form>
-</div>
+</div> 
+<!-- jQuery (จำเป็นสำหรับ Select2) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <!-- สคริปต์ JavaScript -->
 <script>
-document.querySelectorAll('select[name="product[]"]').forEach(sel=>{
-  sel.addEventListener('change',function(){
-    const opt=this.options[this.selectedIndex];
-    const tr=this.closest('tr');
-    tr.querySelector('.cat').value=opt.dataset.cat||'';
-    tr.querySelector('.unit').value=opt.dataset.unit||'';
-  });
-});
 
-document.getElementById('btnAdd').addEventListener('click',()=>{
-  const tb=document.querySelector('#itemBody');
-  const row=tb.children[0].cloneNode(true);
-  row.querySelectorAll('input').forEach(i=>i.value='');
-  row.querySelectorAll('select').forEach(s=>s.selectedIndex=0);
-  tb.appendChild(row);
-  row.querySelector('select').addEventListener('change',function(){
-    const opt=this.options[this.selectedIndex];
-    const tr=this.closest('tr');
-    tr.querySelector('.cat').value=opt.dataset.cat||'';
-    tr.querySelector('.unit').value=opt.dataset.unit||'';
-  });
-  row.querySelector('.btn-remove').addEventListener('click',()=>row.remove());
-  
-  // เพิ่ม event listener ให้กับแถวใหม่
-  row.querySelectorAll('input[name="purchase_price[]"], input[name="quantity[]"]').forEach(input => {
-      input.addEventListener('input', () => updateRowAndTotals(row));
-  });
+// เก็บ HTML ของแถวแรกไว้เป็นต้นแบบ (template) ก่อนที่จะถูก Select2 แปลง
+const rowTemplate = document.getElementById('itemBody').querySelector('tr').cloneNode(true);
 
-  // เพิ่ม event listener ให้กับแถวใหม่ (เรียก updateTotals แทน)
-  row.querySelectorAll('input[name="purchase_price[]"], input[name="quantity[]"]').forEach(input => {
-      input.addEventListener('input', () => updateRowAndTotals(row));
-  });
-    // เรียกใช้งานฟังก์ชัน updateTotals หลังจากเพิ่มแถวใหม่
-    updateTotals();
-});
+function initializeSelect2(element) {
+    $(element).select2({
+        theme: 'bootstrap-5',
+        width: '100%'
+    }).on('select2:select', function (e) {
+        // เมื่อมีการเลือก item ให้ trigger event 'change' ของ DOM เดิม
+        // เพื่อให้โค้ดเก่าที่ดัก 'change' event ทำงานได้
+        e.target.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+}
 
-document.querySelectorAll('.btn-remove').forEach(b=>b.addEventListener('click',()=>b.closest('tr').remove()));
+function addRowListeners(row) {
+    const productSelect = row.querySelector('.product-select');
+    // 2. ผูก Event เดิมสำหรับ Auto-fill
+    productSelect.addEventListener('change', function() {
+        const opt = this.options[this.selectedIndex];
+        const tr = this.closest('tr');
+        tr.querySelector('.cat').value = opt.dataset.cat || '';
+        tr.querySelector('.unit').value = opt.dataset.unit || '';
+    });
 
-// ฟังก์ชันอัปเดต ราคารวม ของแต่ละแถว และ ราคารวมทั้งหมด
-function updateRowAndTotals(row) {
-    calculateTotal(row); // คำนวณราคารวมของแถว
-    updateTotals(); // อัปเดตผลรวมทั้งหมด
+    // 3. ผูก Event สำหรับการคำนวณ
+    const inputs = row.querySelectorAll('input[name="purchase_price[]"], input[name="quantity[]"]');
+    inputs.forEach(input => {
+        input.addEventListener('input', updateTotals);
+    });
+
+    // 4. ผูก Event ปุ่มลบ
+    const removeBtn = row.querySelector('.btn-remove');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', () => {
+            if (document.querySelectorAll('#itemBody tr').length > 1) {
+                row.remove();
+                updateTotals(); // คำนวณใหม่หลังลบแถว
+            } else {
+                alert('ไม่สามารถลบแถวสุดท้ายได้');
+            }
+        });
+    }
 }
 
 
+// ปุ่มเพิ่มแถว
+document.getElementById('btnAdd').addEventListener('click', () => {
+    const tbody = document.getElementById('itemBody');
+    const newRow = rowTemplate.cloneNode(true);
+    
+    // ล้างค่าในแถวใหม่
+    newRow.querySelectorAll('input').forEach(input => input.value = '');
+    newRow.querySelector('.product-select').selectedIndex = 0;
 
-// ฟังก์ชันคำนวณราคารวม
-function calculateTotal(row) {
-    const price = parseFloat(row.querySelector('input[name="purchase_price[]"]').value) || 0;
-    const quantity = parseInt(row.querySelector('input[name="quantity[]"]').value) || 0;
-    const total = price * quantity;
-    // อัปเดตช่องราคารวมของแถว
-    row.querySelector('.row-total').value = total.toFixed(2);
-    return total;
-}
+    tbody.appendChild(newRow);
+    addRowListeners(newRow);
+    initializeSelect2(newRow.querySelector('.product-select'));
+});
 
-// ฟังก์ชันอัปเดตผลรวมทั้งหมด
-function updateTotals() {
+
+// ฟังก์ชันอัปเดตผลรวมทั้งหมด (ราคารวม, VAT, ยอดสุทธิ)
+function updateTotals() { 
     let subtotal = 0;
     document.querySelectorAll('#itemBody tr').forEach(row => {
         const price = parseFloat(row.querySelector('input[name="purchase_price[]"]').value) || 0;
         const quantity = parseInt(row.querySelector('input[name="quantity[]"]').value) || 0;
-        const rowTotal = price * quantity;
-        row.querySelector('.row-total').value = rowTotal.toFixed(2);
-        subtotal += rowTotal;
+        const rowTotalBeforeVat = price * quantity;
+        const rowTotalWithVat = rowTotalBeforeVat * 1.07;
+
+        // อัปเดตช่องราคารวม (ก่อน VAT) ของแถว
+        const rowTotalInput = row.querySelector('.row-total');
+        if (rowTotalInput) rowTotalInput.value = rowTotalBeforeVat.toFixed(2);
+
+        // อัปเดตช่องราคารวม (รวม VAT) ของแถว
+        const rowTotalVatInput = row.querySelector('.row-total-vat');
+        if (rowTotalVatInput) rowTotalVatInput.value = rowTotalWithVat.toFixed(2);
+
+        subtotal += rowTotalBeforeVat;
     });
 
     const vat = subtotal * 0.07;
@@ -265,18 +295,12 @@ function updateTotals() {
     document.getElementById('totalAmount').textContent = total.toFixed(2);
 }
 
-// เพิ่ม event listener สำหรับการเปลี่ยนแปลงใน input
-function addRowListeners(row) {
-    const inputs = row.querySelectorAll('input[name="purchase_price[]"], input[name="quantity[]"]');
-    inputs.forEach(input => {
-        input.addEventListener('input', updateTotals);
-    });
-}
-
-// เพิ่ม listeners ให้กับแถวที่มีอยู่แล้ว
-document.querySelectorAll('#itemBody tr').forEach(addRowListeners);
-
-updateTotals(); // เรียกใช้ฟังก์ชัน updateTotals เพื่อคำนวณผลรวมเริ่มต้น
+// --- ส่วนที่รันเมื่อหน้าเว็บโหลดเสร็จ ---
+$(document).ready(function() {
+    document.querySelectorAll('#itemBody tr').forEach(addRowListeners);
+    initializeSelect2(document.querySelector('.product-select')); // ทำให้แถวแรกค้นหาได้
+    updateTotals(); // คำนวณผลรวมเริ่มต้น
+});
 
 </script>
 </body>

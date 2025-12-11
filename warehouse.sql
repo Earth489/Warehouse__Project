@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 09, 2025 at 02:30 AM
+-- Generation Time: Dec 11, 2025 at 05:33 AM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -75,7 +75,7 @@ CREATE TABLE `products` (
 
 INSERT INTO `products` (`product_id`, `product_name`, `product_unit`, `category_id`, `stock_quantity`, `selling_price`, `reorder_level`, `image_path`) VALUES
 (19, 'ซีเมนต์ฉาบบาง ภายใน สีขาว 20กก ลูกดิ่ง #เหลือง', '', 1, 20.00, 400.00, 10.00, 'uploads/prod_693133954d7653.24787530.png'),
-(23, 'ไขควงลองไฟ Champion #7700', '', 13, 50.00, 15.00, 20.00, 'uploads/prod_692e8d368c8f67.36825925.png'),
+(23, 'ไขควงลองไฟ Champion #7700', 'อัน', 13, 68.00, 15.00, 20.00, 'uploads/prod_692e8d368c8f67.36825925.png'),
 (24, 'สีเคลือบเงา TOA #G100 14กล.- สีขาว', '', 8, 10.00, 230.00, 10.00, 'uploads/prod_692ea65f4cc049.16606036.jpg'),
 (29, 'ปูนเกร้าท์ 621 สแตนดาร์ด 20กก. จระเข้', '', 1, 30.00, 350.00, 10.00, 'uploads/prod_6930f24941f366.55791354.jpg'),
 (30, 'สีฝุ่น สีเขียว', '', 22, 100.00, 20.00, 5.00, 'uploads/prod_6930f282dd0cc7.07067307.jpg'),
@@ -110,7 +110,26 @@ INSERT INTO `products` (`product_id`, `product_name`, `product_unit`, `category_
 (63, 'หัวน็อตหกเหลี่ยม อลูมิเนียม (มิล) M6', '', 17, 0.00, 15.00, 20.00, 'uploads/1764832384_หัวน็อตหกเหลี่ยม อลูมิเนียม (มิล) M6.jpg'),
 (64, 'ปูนซีเมนต์ 50 กก. ช้าง # แดง', '', 1, 0.00, 20.00, 20.00, 'uploads/prod_6931364de98fe5.84576683.jpg'),
 (65, 'ปูนซีเมนต์ 40กก. เสือ #ซุปเปอร์', '', 1, 0.00, 20.00, 20.00, 'uploads/prod_693136e74f3fe5.00587558.jpg'),
-(66, 'ปูนซีเมนต์ 50กก. ทีพีไอ #เขียว', '', 1, 0.00, 20.00, 20.00, 'uploads/prod_693138b5b4e1a2.34591387.png');
+(66, 'ปูนซีเมนต์ 50กก. ทีพีไอ #เขียว', '', 1, 0.00, 20.00, 20.00, 'uploads/prod_693138b5b4e1a2.34591387.png'),
+(67, 'ดำดำหดหำ', 'ลิตร', 5, 36.00, 10.00, 10.00, NULL),
+(68, 'เพกเกพ้กพะ้', 'ชุด', 17, 28.00, 15.00, 10.00, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `product_split`
+--
+
+CREATE TABLE `product_split` (
+  `id` int(11) NOT NULL,
+  `parent_product_id` int(11) NOT NULL,
+  `parent_qty` decimal(10,2) NOT NULL,
+  `new_product_id` int(11) NOT NULL,
+  `new_qty` decimal(10,2) NOT NULL,
+  `cost` decimal(10,2) DEFAULT NULL,
+  `split_date` datetime NOT NULL DEFAULT current_timestamp(),
+  `user_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -142,7 +161,11 @@ INSERT INTO `purchases` (`purchase_id`, `purchase_number`, `user_id`, `supplier_
 (42, 'FG54687521', 1, 4, '2025-12-04', 24600.00),
 (43, 'KO54857785', 1, 3, '2025-12-04', 5500.00),
 (45, 'AL15485164', 1, 1, '2025-12-04', 3000.00),
-(46, 'LD5484155', 1, 1, '2025-12-04', 340.00);
+(46, 'LD5484155', 1, 1, '2025-12-04', 340.00),
+(47, 'ฺBI68063275', 1, 9, '2025-12-10', 100.00),
+(48, 'DG2282385', 1, 9, '2025-12-10', 200.00),
+(49, 'AO123445758', 1, 9, '2025-12-10', 300.00),
+(50, 'SK', 1, 3, '2025-12-10', 376.00);
 
 -- --------------------------------------------------------
 
@@ -192,7 +215,16 @@ INSERT INTO `purchase_details` (`purchase_detail_id`, `purchase_id`, `product_id
 (71, 45, 30, 50, 15.00),
 (72, 45, 36, 50, 15.00),
 (73, 45, 37, 50, 15.00),
-(74, 46, 35, 20, 17.00);
+(74, 46, 35, 20, 17.00),
+(75, 47, 67, 10, 10.00),
+(76, 48, 68, 10, 10.00),
+(77, 48, 67, 10, 10.00),
+(78, 49, 68, 10, 10.00),
+(79, 49, 67, 10, 10.00),
+(80, 49, 23, 10, 10.00),
+(81, 50, 68, 11, 10.00),
+(82, 50, 23, 10, 11.00),
+(83, 50, 67, 13, 12.00);
 
 -- --------------------------------------------------------
 
@@ -214,7 +246,10 @@ CREATE TABLE `sales` (
 INSERT INTO `sales` (`sale_id`, `user_id`, `sale_date`, `total_amount`) VALUES
 (26, 1, '2025-12-02', 2300.00),
 (27, 1, '2025-12-04', 910.00),
-(28, 1, '2025-12-04', 510.00);
+(28, 1, '2025-12-04', 510.00),
+(29, 1, '2025-12-10', 30.00),
+(30, 1, '2025-12-10', 75.00),
+(31, 1, '2025-12-10', 10.00);
 
 -- --------------------------------------------------------
 
@@ -242,7 +277,14 @@ INSERT INTO `sale_details` (`sale_detail_id`, `sale_id`, `product_id`, `quantity
 (36, 27, 51, 1, 20.00, 'ถุง'),
 (37, 28, 32, 1, 120.00, 'ถุง'),
 (38, 28, 42, 2, 150.00, 'ถุง'),
-(39, 28, 33, 3, 30.00, 'ถุง');
+(39, 28, 33, 3, 30.00, 'ถุง'),
+(40, 29, 67, 1, 10.00, 'ลิตร'),
+(41, 29, 68, 1, 5.00, 'ชุด'),
+(42, 29, 23, 1, 15.00, 'อัน'),
+(43, 30, 68, 2, 5.00, 'ชุด'),
+(44, 30, 67, 5, 10.00, 'ลิตร'),
+(45, 30, 23, 1, 15.00, 'อัน'),
+(46, 31, 67, 1, 10.00, 'ลิตร');
 
 -- --------------------------------------------------------
 
@@ -307,6 +349,16 @@ ALTER TABLE `products`
   ADD KEY `category_id` (`category_id`);
 
 --
+-- Indexes for table `product_split`
+--
+ALTER TABLE `product_split`
+  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `parent_product_id` (`parent_product_id`),
+  ADD KEY `new_product_id` (`new_product_id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
 -- Indexes for table `purchases`
 --
 ALTER TABLE `purchases`
@@ -363,31 +415,38 @@ ALTER TABLE `categories`
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
+  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
+
+--
+-- AUTO_INCREMENT for table `product_split`
+--
+ALTER TABLE `product_split`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 
 --
 -- AUTO_INCREMENT for table `purchases`
 --
 ALTER TABLE `purchases`
-  MODIFY `purchase_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
+  MODIFY `purchase_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
 
 --
 -- AUTO_INCREMENT for table `purchase_details`
 --
 ALTER TABLE `purchase_details`
-  MODIFY `purchase_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
+  MODIFY `purchase_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=84;
 
 --
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `sale_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `sale_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `sale_details`
 --
 ALTER TABLE `sale_details`
-  MODIFY `sale_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `sale_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
 -- AUTO_INCREMENT for table `suppliers`
@@ -410,6 +469,14 @@ ALTER TABLE `users`
 --
 ALTER TABLE `products`
   ADD CONSTRAINT `products_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`category_id`);
+
+--
+-- Constraints for table `product_split`
+--
+ALTER TABLE `product_split`
+  ADD CONSTRAINT `product_split_ibfk_1` FOREIGN KEY (`parent_product_id`) REFERENCES `products` (`product_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `product_split_ibfk_2` FOREIGN KEY (`new_product_id`) REFERENCES `products` (`product_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `product_split_ibfk_3` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `purchases`

@@ -138,7 +138,8 @@ $result = $stmt->get_result();
           <li class="nav-item"><a class="nav-link" href="homepage.php">หน้าแรก</a></li>
           <li class="nav-item"><a class="nav-link" href="categories.php">ประเภทสินค้า</a></li>
           <li class="nav-item"><a class="nav-link" href="suppliers.php">ซัพพลายเออร์</a></li>
-          <li class="nav-item"><a class="nav-link active" href="products.php">สินค้า</a></li>          
+          <li class="nav-item"><a class="nav-link active" href="products.php">สินค้า</a></li>       
+          <li class="nav-item"><a class="nav-link" href="product_split.php">แยกสินค้า</a></li>     
           <li class="nav-item"><a class="nav-link" href="warehouse_page.php">บิลรับสินค้า</a></li>
           <li class="nav-item"><a class="nav-link" href="warehouse_sale.php">บิลขายสินค้า</a></li>
           <li class="nav-item"><a class="nav-link " href="report.php">รายงาน</a></li>
@@ -163,6 +164,7 @@ $result = $stmt->get_result();
 
     <div class="search-section">
         <form method="get">
+            <h6 class="mb-3 fw-bold text-secondary"><i class="bi bi-funnel"></i> ตัวกรองการค้นหา</h6>
             <div class="row g-3 align-items-end">
                 <div class="col-md-4">
                     <label class="form-label text-muted small">ค้นหา</label>

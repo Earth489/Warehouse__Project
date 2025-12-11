@@ -35,10 +35,12 @@ if (isset($_POST['update'])) {
     $name = $_POST['supplier_name'];
     $address = $_POST['address'];
     $phone = $_POST['phone'];
+    $description = $_POST['description']; // รับค่า description
 
-    $sql_update = "UPDATE suppliers SET supplier_name = ?, address = ?, phone = ? WHERE supplier_id = ?";
+    // เพิ่ม description ในคำสั่ง SQL
+    $sql_update = "UPDATE suppliers SET supplier_name = ?, address = ?, phone = ?, description = ? WHERE supplier_id = ?";
     $stmt = $conn->prepare($sql_update);
-    $stmt->bind_param("sssi", $name, $address, $phone, $supplier_id);
+    $stmt->bind_param("ssssi", $name, $address, $phone, $description, $supplier_id);
 
     if ($stmt->execute()) {
         echo "<script>alert('อัปเดตข้อมูลเรียบร้อย'); window.location='suppliers.php';</script>";
@@ -103,6 +105,10 @@ if (isset($_POST['update'])) {
         <div class="mb-3">
           <label class="form-label">เบอร์โทร</label>
           <input type="text" name="phone" class="form-control" value="<?= $supplier['phone'] ?>">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">รายละเอียด</label>
+          <textarea name="description" class="form-control" rows="3"><?= htmlspecialchars($supplier['description'] ?? '') ?></textarea>
         </div>
         <button type="submit" name="update" class="btn btn-success">บันทึกการแก้ไข</button>
         <a href="suppliers.php" class="btn btn-secondary">ยกเลิก</a>

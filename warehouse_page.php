@@ -152,7 +152,7 @@ $stmt->close();
         <th>วันที่</th>
         <th>เลขที่บิล</th>
         <th>ซัพพลายเออร์</th>
-        <th class="text-end">ยอดรวม (บาท)</th>
+        <th>ยอดรวม (บาท)</th>
         <th>จัดการ</th>
       </tr>
     </thead>
