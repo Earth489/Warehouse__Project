@@ -87,7 +87,7 @@ body {
 <!-- แถบเมนูด้านบน -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
-      <a class="navbar-brand" href="#">🏠 Warehouse System</a>
+      <a class="navbar-brand" href="#">🏠 ระบบจัดการคลังสินค้า สำหรับร้านวัสดุก่อสร้าง</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -96,7 +96,8 @@ body {
           <li class="nav-item"><a class="nav-link" href="homepage.php">หน้าแรก</a></li>
           <li class="nav-item"><a class="nav-link" href="categories.php">ประเภทสินค้า</a></li>
           <li class="nav-item"><a class="nav-link" href="suppliers.php">ซัพพลายเออร์</a></li>
-          <li class="nav-item"><a class="nav-link" href="products.php">สินค้า</a></li>          
+          <li class="nav-item"><a class="nav-link" href="products.php">สินค้า</a></li>       
+          <li class="nav-item"><a class="nav-link" href="product_split.php">แยกสินค้า</a></li>   
           <li class="nav-item"><a class="nav-link active" href="warehouse_page.php">บิลรับสินค้า</a></li>
           <li class="nav-item"><a class="nav-link" href="warehouse_sale.php">บิลขายสินค้า</a></li>
           <li class="nav-item"><a class="nav-link" href="report.php">รายงาน</a></li>

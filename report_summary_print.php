@@ -84,7 +84,10 @@ if ($bill_type === 'all' || $bill_type === 'บิลขาย (Sale)') {
         h3, h4 { margin-top: 1.5rem; }
         .table th, .table td { vertical-align: middle; }
         .table .product-name { text-align: left; }
-        .table .unit-col { text-align: center; }
+        .table .unit-col { 
+            text-align: center; 
+            width: 12%; /* Adjust width for the unit column */
+        }
         .table .amount-col { text-align: right; }
         @media print {
             .no-print { display: none; }

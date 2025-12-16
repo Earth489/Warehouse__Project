@@ -116,13 +116,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark no-print">
     <div class="container-fluid">
-      <a class="navbar-brand" href="#">🏠 Warehouse System</a>
+      <a class="navbar-brand" href="#">🏠 ระบบจัดการคลังสินค้า สำหรับร้านวัสดุก่อสร้าง</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
           <li class="nav-item"><a class="nav-link" href="homepage.php">หน้าแรก</a></li>
+          <li class="nav-item"><a class="nav-link" href="categories.php">ประเภทสินค้า</a></li>
+          <li class="nav-item"><a class="nav-link" href="suppliers.php">ซัพพลายเออร์</a></li>
           <li class="nav-item"><a class="nav-link" href="products.php">สินค้า</a></li>       
           <li class="nav-item"><a class="nav-link active" href="product_split.php">แยกสินค้า</a></li>     
           <li class="nav-item"><a class="nav-link" href="warehouse_page.php">บิลรับสินค้า</a></li>

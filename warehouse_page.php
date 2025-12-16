@@ -83,12 +83,13 @@ $stmt->close();
 <meta charset="UTF-8">
 <title>บิลรับสินค้า</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 </head>
 <body>
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <div class="container-fluid">
-    <a class="navbar-brand" href="#">🏠 Warehouse System</a>
+    <a class="navbar-brand" href="#">🏠 ระบบจัดการคลังสินค้า สำหรับร้านวัสดุก่อสร้าง</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -99,6 +100,7 @@ $stmt->close();
         <li class="nav-item"><a class="nav-link" href="categories.php">ประเภทสินค้า</a></li>
         <li class="nav-item"><a class="nav-link" href="suppliers.php">ซัพพลายเออร์</a></li>
         <li class="nav-item"><a class="nav-link" href="products.php">สินค้า</a></li>
+        <li class="nav-item"><a class="nav-link" href="product_split.php">แยกสินค้า</a></li>
         <li class="nav-item"><a class="nav-link active" href="warehouse_page.php">บิลรับสินค้า</a></li>
         <li class="nav-item"><a class="nav-link" href="warehouse_sale.php">บิลขายสินค้า</a></li>
         <li class="nav-item"><a class="nav-link" href="report.php">รายงาน</a></li>
@@ -137,8 +139,8 @@ $stmt->close();
         </select>
       </div>
       <div class="col-md-3 d-flex gap-2">
-        <button class="btn btn-primary flex-grow-1 me-2" type="submit">ค้นหา</button>
-        <a href="warehouse_page.php" class="btn btn-dark flex-grow-1">-</a>
+        <button class="btn btn-primary flex-grow-1 " type="submit">ค้นหา</button>
+        <a href="warehouse_sale.php" class="btn btn-secondary d-flex align-items-center justify-content-center" title="ล้างการค้นหา" style="width: 45px;"><i class="bi bi-arrow-counterclockwise"></i></a>
       </div>
     </div>
   </form>
